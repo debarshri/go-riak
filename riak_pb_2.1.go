@@ -1,7 +1,7 @@
 package riak
 
 import (
-	proto "code.google.com/p/goprotobuf/proto"
+	proto "github.com/golang/protobuf/proto"
 	math "math"
 )
 
@@ -40,6 +40,9 @@ It has these top-level messages:
 	RpbCounterUpdateResp
 	RpbCounterGetReq
 	RpbCounterGetResp
+	RpbGetBucketKeyPreflistReq
+	RpbGetBucketKeyPreflistResp
+	RpbBucketKeyPreflistItem
 */
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1313,6 +1316,89 @@ func (m *RpbCounterGetResp) GetValue() int64 {
 	return 0
 }
 
+// Get bucket-key preflist request
+type RpbGetBucketKeyPreflistReq struct {
+	Bucket           []byte `protobuf:"bytes,1,req,name=bucket" json:"bucket,omitempty"`
+	Key              []byte `protobuf:"bytes,2,req,name=key" json:"key,omitempty"`
+	Type             []byte `protobuf:"bytes,3,opt,name=type" json:"type,omitempty"`
+	XXX_unrecognized []byte `json:"-"`
+}
+
+func (m *RpbGetBucketKeyPreflistReq) Reset()         { *m = RpbGetBucketKeyPreflistReq{} }
+func (m *RpbGetBucketKeyPreflistReq) String() string { return proto.CompactTextString(m) }
+func (*RpbGetBucketKeyPreflistReq) ProtoMessage()    {}
+
+func (m *RpbGetBucketKeyPreflistReq) GetBucket() []byte {
+	if m != nil {
+		return m.Bucket
+	}
+	return nil
+}
+
+func (m *RpbGetBucketKeyPreflistReq) GetKey() []byte {
+	if m != nil {
+		return m.Key
+	}
+	return nil
+}
+
+func (m *RpbGetBucketKeyPreflistReq) GetType() []byte {
+	if m != nil {
+		return m.Type
+	}
+	return nil
+}
+
+// Get bucket-key preflist response
+type RpbGetBucketKeyPreflistResp struct {
+	Preflist         []*RpbBucketKeyPreflistItem `protobuf:"bytes,1,rep,name=preflist" json:"preflist,omitempty"`
+	XXX_unrecognized []byte                      `json:"-"`
+}
+
+func (m *RpbGetBucketKeyPreflistResp) Reset()         { *m = RpbGetBucketKeyPreflistResp{} }
+func (m *RpbGetBucketKeyPreflistResp) String() string { return proto.CompactTextString(m) }
+func (*RpbGetBucketKeyPreflistResp) ProtoMessage()    {}
+
+func (m *RpbGetBucketKeyPreflistResp) GetPreflist() []*RpbBucketKeyPreflistItem {
+	if m != nil {
+		return m.Preflist
+	}
+	return nil
+}
+
+// Preflist item
+type RpbBucketKeyPreflistItem struct {
+	Partition        *int64 `protobuf:"varint,1,req,name=partition" json:"partition,omitempty"`
+	Node             []byte `protobuf:"bytes,2,req,name=node" json:"node,omitempty"`
+	Primary          *bool  `protobuf:"varint,3,req,name=primary" json:"primary,omitempty"`
+	XXX_unrecognized []byte `json:"-"`
+}
+
+func (m *RpbBucketKeyPreflistItem) Reset()         { *m = RpbBucketKeyPreflistItem{} }
+func (m *RpbBucketKeyPreflistItem) String() string { return proto.CompactTextString(m) }
+func (*RpbBucketKeyPreflistItem) ProtoMessage()    {}
+
+func (m *RpbBucketKeyPreflistItem) GetPartition() int64 {
+	if m != nil && m.Partition != nil {
+		return *m.Partition
+	}
+	return 0
+}
+
+func (m *RpbBucketKeyPreflistItem) GetNode() []byte {
+	if m != nil {
+		return m.Node
+	}
+	return nil
+}
+
+func (m *RpbBucketKeyPreflistItem) GetPrimary() bool {
+	if m != nil && m.Primary != nil {
+		return *m.Primary
+	}
+	return false
+}
+
 func init() {
 	proto.RegisterEnum("RpbIndexReq_IndexQueryType", RpbIndexReq_IndexQueryType_name, RpbIndexReq_IndexQueryType_value)
 }
@@ -1691,7 +1777,9 @@ type RpbBucketProps struct {
 	// KV Datatypes
 	Datatype []byte `protobuf:"bytes,26,opt,name=datatype" json:"datatype,omitempty"`
 	// KV strong consistency
-	Consistent       *bool  `protobuf:"varint,27,opt,name=consistent" json:"consistent,omitempty"`
+	Consistent *bool `protobuf:"varint,27,opt,name=consistent" json:"consistent,omitempty"`
+	// KV fast path
+	WriteOnce        *bool  `protobuf:"varint,28,opt,name=write_once" json:"write_once,omitempty"`
 	XXX_unrecognized []byte `json:"-"`
 }
 
@@ -1887,6 +1975,13 @@ func (m *RpbBucketProps) GetDatatype() []byte {
 func (m *RpbBucketProps) GetConsistent() bool {
 	if m != nil && m.Consistent != nil {
 		return *m.Consistent
+	}
+	return false
+}
+
+func (m *RpbBucketProps) GetWriteOnce() bool {
+	if m != nil && m.WriteOnce != nil {
+		return *m.WriteOnce
 	}
 	return false
 }
@@ -2948,6 +3043,7 @@ func (m *RpbYokozunaIndexGetResp) GetIndex() []*RpbYokozunaIndex {
 // PUT request - Create a new index
 type RpbYokozunaIndexPutReq struct {
 	Index            *RpbYokozunaIndex `protobuf:"bytes,1,req,name=index" json:"index,omitempty"`
+	Timeout          *uint32           `protobuf:"varint,2,opt,name=timeout" json:"timeout,omitempty"`
 	XXX_unrecognized []byte            `json:"-"`
 }
 
@@ -2960,6 +3056,13 @@ func (m *RpbYokozunaIndexPutReq) GetIndex() *RpbYokozunaIndex {
 		return m.Index
 	}
 	return nil
+}
+
+func (m *RpbYokozunaIndexPutReq) GetTimeout() uint32 {
+	if m != nil && m.Timeout != nil {
+		return *m.Timeout
+	}
+	return 0
 }
 
 // DELETE request - Remove an index

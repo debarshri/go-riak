@@ -1,4 +1,4 @@
-UPSTREAM_TAG := 2.0.0.17
+UPSTREAM_TAG := 2.1.0.2
 VERSION := $(shell echo $(UPSTREAM_TAG) | cut -d'.' -f1,2)
 
 TARGET = riak_pb_$(VERSION).go

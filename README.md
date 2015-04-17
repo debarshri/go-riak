@@ -23,6 +23,12 @@ Bucket    | ResetBucket, GetBucketType, SetBucketType
 Data type | DtFetch, DtUpdate
 Yokozuna  | YokozunaIndexGet, YokozunaIndexPut, YokozunaIndexDelete, YokozunaSchemaGet, YokozunaSchemaPut
 
+#### Riak 2.1
+
+Operation | Functions
+----------|---------------------------------------------
+Server    | BucketKeyPreflist
+
 ## Build
 
 ```sh

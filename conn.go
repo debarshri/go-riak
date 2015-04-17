@@ -1,8 +1,8 @@
 package riak
 
 import (
-	"code.google.com/p/goprotobuf/proto"
 	"errors"
+	"github.com/golang/protobuf/proto"
 	"io"
 	"net"
 	"time"
