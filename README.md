@@ -14,6 +14,15 @@ Key-value | Get, Put, Del
 Bucket    | GetBucket, SetBucket, ListBuckets, ListKeys
 Query     | Index, MapRed, SearchQuery, GetMany
 
+#### Riak 2.0
+
+Operation | Functions
+----------|---------------------------------------------
+Server    | Authenticate
+Bucket    | ResetBucket, GetBucketType, SetBucketType
+Data type | DtFetch, DtUpdate
+Yokozuna  | YokozunaIndexGet, YokozunaIndexPut, YokozunaIndexDelete, YokozunaSchemaGet, YokozunaSchemaPut
+
 ## Build
 
 ```sh

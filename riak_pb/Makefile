@@ -1,4 +1,4 @@
-UPSTREAM_TAG := 1.4.4.0
+UPSTREAM_TAG := 2.0.0.17
 VERSION := $(shell echo $(UPSTREAM_TAG) | cut -d'.' -f1,2)
 
 TARGET = riak_pb_$(VERSION).go
@@ -6,6 +6,8 @@ TARGET = riak_pb_$(VERSION).go
 PROTO = riak_kv.proto \
 		riak.proto \
 		riak_search.proto \
+		riak_dt.proto \
+		riak_yokozuna.proto \
 
 GOFILES	= $(PROTO:.proto=.pb.go)
 
