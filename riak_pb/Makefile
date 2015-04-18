@@ -1,7 +1,6 @@
 UPSTREAM_TAG := 2.1.0.2
-VERSION := $(shell echo $(UPSTREAM_TAG) | cut -d'.' -f1,2)
 
-TARGET = riak_pb_$(VERSION).go
+TARGET = riak_pb.go
 
 PROTO = riak_kv.proto \
 		riak.proto \
