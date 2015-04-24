@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/golang/protobuf/proto"
 	"reflect"
+	"time"
 )
 
 var ErrPtrRequired = errors.New("function requires a pointer argument")
@@ -68,7 +69,7 @@ func SetReqCAPControls(req proto.Message, ctrl CAPControls) {
 	}
 }
 
-func SetReqTimeout(req proto.Message, timeout uint32) {
+func SetReqTimeout(req proto.Message, timeout time.Duration) {
 	if timeout == 0 {
 		return
 	}
@@ -77,5 +78,5 @@ func SetReqTimeout(req proto.Message, timeout uint32) {
 		panic(ErrPtrRequired)
 	}
 	v = v.Elem()
-	setField(v, "Timeout", timeout)
+	setField(v, "Timeout", uint32(timeout.Seconds()*1000))
 }
