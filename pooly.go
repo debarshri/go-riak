@@ -2,6 +2,7 @@ package riak
 
 import (
 	"github.com/3XX0/pooly"
+	"log"
 	"net"
 	"regexp"
 	"time"
@@ -10,6 +11,7 @@ import (
 var hostport = regexp.MustCompile("[?.*]?:.*")
 
 type Driver struct {
+	logger       *log.Logger
 	connTimeout  time.Duration
 	writeTimeout time.Duration
 	readTimeout  time.Duration
@@ -40,6 +42,16 @@ func (d *Driver) SetTestInterval(t time.Duration) {
 	d.testInterval = t
 }
 
+func (d *Driver) SetLogger(l *log.Logger) {
+	d.logger = l
+}
+
+func (d *Driver) logf(format string, v ...interface{}) {
+	if d.logger != nil {
+		d.logger.Printf(format+"\n", v...)
+	}
+}
+
 func (d *Driver) Dial(address string) (*pooly.Conn, error) {
 	var c net.Conn
 	var err error
@@ -54,6 +66,7 @@ func (d *Driver) Dial(address string) (*pooly.Conn, error) {
 		c, err = net.Dial("tcp", address)
 	}
 	if err != nil {
+		d.logf("dial error: %v", err)
 		return nil, err
 	}
 
@@ -62,6 +75,7 @@ func (d *Driver) Dial(address string) (*pooly.Conn, error) {
 		writeTimeout: d.writeTimeout,
 		readTimeout:  d.readTimeout,
 	}
+	d.logf("connection opened (%s)", address)
 	return pooly.NewConn(conn), nil
 }
 
@@ -70,6 +84,7 @@ func (d *Driver) Close(conn *pooly.Conn) {
 	if c != nil {
 		c.conn.Close()
 	}
+	d.logf("connection closed")
 }
 
 func (d *Driver) TestOnBorrow(conn *pooly.Conn) error {
@@ -81,12 +96,21 @@ func (d *Driver) TestOnBorrow(conn *pooly.Conn) error {
 	}
 	c.lastChecked = time.Now()
 
-	return c.Ping()
+	err := c.Ping()
+	if err != nil {
+		d.logf("borrowing failed: %v", err)
+	}
+	return err
 }
 
 func (d *Driver) Temporary(err error) bool {
+	var tmp bool
+
 	if e, ok := err.(net.Error); ok {
-		return e.Temporary()
+		tmp = e.Temporary()
 	}
-	return false
+	if !tmp {
+		d.logf("fatal connection error: %v", err)
+	}
+	return tmp
 }
