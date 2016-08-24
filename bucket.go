@@ -1,8 +1,6 @@
 package riak
 
 import (
-	"golang.org/x/oauth2/google"
-	"golang.org/x/net/context"
 	storage "google.golang.org/api/storage/v1"
 	"log"
 )
