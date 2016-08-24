@@ -3,6 +3,7 @@ package riak
 import (
 	storage "google.golang.org/api/storage/v1"
 	"log"
+	"fmt"
 )
 
 
@@ -69,10 +70,11 @@ func (c *Conn) ListKeysWithGcloud(req *RpbListKeysReq, gs GCloudFSClient) (error
 		}
 		//resps = append(resps, resp)
 
-		keys := resp.Keys
-		if !gs.Exists(keys){
-			log.Printf("Key %v doesnt exist",keys)
-		}
+		keys := resp.GetKeys()
+		fmt.Println(keys)
+		//if !gs.Exists(keys){
+		//	log.Printf("Key %v doesnt exist",keys)
+		//}
 
 		if resp.GetDone() {
 			break
