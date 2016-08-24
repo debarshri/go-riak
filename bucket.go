@@ -1,5 +1,22 @@
 package riak
 
+import (
+	"golang.org/x/oauth2/google"
+	"golang.org/x/net/context"
+	storage "google.golang.org/api/storage/v1"
+	"log"
+)
+
+
+type GCloudFSClient struct {
+	BucketNamePrefix string
+	BucketName       string
+	Gcloud           *storage.Service
+	ContentType      string
+	ClientSecret     string
+}
+
+
 // Performs a Riak Get Bucket request.
 func (c *Conn) GetBucket(req *RpbGetBucketReq) (resp *RpbGetBucketResp, err error) {
 	resp = new(RpbGetBucketResp)
@@ -40,6 +57,36 @@ func (c *Conn) ListKeys(req *RpbListKeysReq) ([]*RpbListKeysResp, error) {
 		}
 	}
 	return resps, nil
+}
+
+func (c *Conn) ListKeysWithGcloud(req *RpbListKeysReq, gs GCloudFSClient) ([]*RpbListKeysResp, error) {
+	var resps []*RpbListKeysResp
+
+	if err := c.request(MsgRpbListKeysReq, req); err != nil {
+		return nil, err
+	}
+	for {
+		resp := new(RpbListKeysResp)
+		if err := c.response(MsgRpbListKeysResp, resp); err != nil {
+			return nil, err
+		}
+		resps = append(resps, resp)
+
+		if resp.GetDone() {
+			break
+		}
+	}
+	return resps, nil
+}
+
+func (gs GCloudFSClient) Exists(key string) bool {
+
+	if _, err := gs.Gcloud.Objects.Get(gs.BucketNamePrefix+"-"+gs.BucketName, key).Do(); err == nil {
+		return true
+	} else {
+		log.Print("Did not find "+key+"in Google, checking in fallback")
+		return false
+	}
 }
 
 // Performs a Riak Reset Bucket request.
