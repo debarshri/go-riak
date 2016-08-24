@@ -57,8 +57,7 @@ func (c *Conn) ListKeys(req *RpbListKeysReq) ([]*RpbListKeysResp, error) {
 	return resps, nil
 }
 
-func (c *Conn) ListKeysWithGcloud(req *RpbListKeysReq, gs GCloudFSClient) ([]*RpbListKeysResp, error) {
-	var resps []*RpbListKeysResp
+func (c *Conn) ListKeysWithGcloud(req *RpbListKeysReq, gs GCloudFSClient) (error) {
 
 	if err := c.request(MsgRpbListKeysReq, req); err != nil {
 		return nil, err
@@ -68,13 +67,17 @@ func (c *Conn) ListKeysWithGcloud(req *RpbListKeysReq, gs GCloudFSClient) ([]*Rp
 		if err := c.response(MsgRpbListKeysResp, resp); err != nil {
 			return nil, err
 		}
-		resps = append(resps, resp)
+		//resps = append(resps, resp)
+
+		if !gs.Exists(resp.GetKeys()){
+			log.Println("Key "+resp.GetKeys()+" doesnt exist")
+		}
 
 		if resp.GetDone() {
 			break
 		}
 	}
-	return resps, nil
+	return  nil
 }
 
 func (gs GCloudFSClient) Exists(key string) bool {
