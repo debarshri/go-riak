@@ -3,7 +3,8 @@ package riak
 import (
 	storage "google.golang.org/api/storage/v1"
 	"log"
-	"fmt"
+	"github.com/3XX0/pooly"
+	"flag"
 )
 
 
@@ -63,6 +64,8 @@ func (c *Conn) ListKeysWithGcloud(req *RpbListKeysReq, gs GCloudFSClient) (error
 	if err := c.request(MsgRpbListKeysReq, req); err != nil {
 		return err
 	}
+
+	bucket := req.Bucket
 	for {
 		resp := new(RpbListKeysResp)
 		if err := c.response(MsgRpbListKeysResp, resp); err != nil {
@@ -70,11 +73,44 @@ func (c *Conn) ListKeysWithGcloud(req *RpbListKeysReq, gs GCloudFSClient) (error
 		}
 		//resps = append(resps, resp)
 
-		keys := resp.GetKeys()
-		fmt.Println(keys)
-		//if !gs.Exists(keys){
-		//	log.Printf("Key %v doesnt exist",keys)
-		//}
+		key := string(resp.Keys[1])
+		if !gs.Exists(key){
+
+			log.Printf("%v key doesn't exist in gcloud", key)
+
+			kv  := RpbGetReq{Bucket:bucket,Key:[]byte(key),}
+
+			s := CreatePool()
+			defer s.Close()
+
+			con, err := s.GetConn()
+			client := Client(con)
+
+			resKV, err := client.Get(&kv)
+
+			if err != nil {
+				log.Printf("%v key not found with err %v", key, err)
+
+			}
+			log.Printf("Content length %v",len(resKV.Content[0].Value))
+
+			//TODO
+			//data := resKV.Content[0].Value
+			//
+			//fmt.Printf("Data length is %v",len(data))
+			//buf := bytes.NewBuffer(data)
+			//object := &storage.Object{Name: key}
+			//if res, err := gs.Gcloud.Objects.Insert(gs.BucketNamePrefix+"-"+gs.BucketName, object).Media(buf).Do(); err == nil {
+			//	log.Printf("Inserted Object %v to GCloud Store at location: %v", res.Name, res.SelfLink)
+			//	return key, nil
+			//} else {
+			//	return key, err
+			//}
+
+		} else {
+			log.Printf("Key %v exist",key)
+
+		}
 
 		if resp.GetDone() {
 			break
@@ -88,7 +124,7 @@ func (gs GCloudFSClient) Exists(key string) bool {
 	if _, err := gs.Gcloud.Objects.Get(gs.BucketNamePrefix+"-"+gs.BucketName, key).Do(); err == nil {
 		return true
 	} else {
-		log.Print("Did not find "+key+"in Google, checking in fallback")
+		log.Print("Did not find "+key+" in Google")
 		return false
 	}
 }
@@ -108,4 +144,16 @@ func (c *Conn) GetBucketType(req *RpbGetBucketTypeReq) (resp *RpbGetBucketResp, 
 // Performs a Riak Set Bucket Type request.
 func (c *Conn) SetBucketType(req *RpbSetBucketTypeReq) error {
 	return c.do(MsgRpbSetBucketTypeReq, MsgRpbSetBucketResp, req, nil)
+}
+
+
+func CreatePool()(*pooly.Service){
+	conf := new(pooly.ServiceConfig)
+	conf.Driver = NewDriver()
+
+	s, _ := pooly.NewService("riak", conf)
+	s.Add("localhost:8087")
+
+
+	return s
 }
