@@ -1,7 +1,6 @@
 package riak
 
 import (
-	"flag"
 	"github.com/3XX0/pooly"
 	storage "google.golang.org/api/storage/v1"
 	"log"
