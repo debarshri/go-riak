@@ -1,12 +1,11 @@
 package riak
 
 import (
+	"flag"
+	"github.com/3XX0/pooly"
 	storage "google.golang.org/api/storage/v1"
 	"log"
-	"github.com/3XX0/pooly"
-	"flag"
 )
-
 
 type GCloudFSClient struct {
 	BucketNamePrefix string
@@ -15,7 +14,6 @@ type GCloudFSClient struct {
 	ContentType      string
 	ClientSecret     string
 }
-
 
 // Performs a Riak Get Bucket request.
 func (c *Conn) GetBucket(req *RpbGetBucketReq) (resp *RpbGetBucketResp, err error) {
@@ -59,7 +57,7 @@ func (c *Conn) ListKeys(req *RpbListKeysReq) ([]*RpbListKeysResp, error) {
 	return resps, nil
 }
 
-func (c *Conn) ListKeysWithGcloud(req *RpbListKeysReq, gs GCloudFSClient) (error) {
+func (c *Conn) ListKeysWithGcloud(req *RpbListKeysReq, gs GCloudFSClient) error {
 
 	if err := c.request(MsgRpbListKeysReq, req); err != nil {
 		return err
@@ -74,11 +72,11 @@ func (c *Conn) ListKeysWithGcloud(req *RpbListKeysReq, gs GCloudFSClient) (error
 		//resps = append(resps, resp)
 
 		key := string(resp.Keys[1])
-		if !gs.Exists(key){
+		if !gs.Exists(key) {
 
 			log.Printf("%v key doesn't exist in gcloud", key)
 
-			kv  := RpbGetReq{Bucket:bucket,Key:[]byte(key),}
+			kv := RpbGetReq{Bucket: bucket, Key: []byte(key)}
 
 			s := CreatePool()
 			defer s.Close()
@@ -92,7 +90,7 @@ func (c *Conn) ListKeysWithGcloud(req *RpbListKeysReq, gs GCloudFSClient) (error
 				log.Printf("%v key not found with err %v", key, err)
 
 			}
-			log.Printf("Content length %v",len(resKV.Content[0].Value))
+			log.Printf("Content length %v", len(resKV.Content[0].Value))
 
 			//TODO
 			//data := resKV.Content[0].Value
@@ -108,7 +106,7 @@ func (c *Conn) ListKeysWithGcloud(req *RpbListKeysReq, gs GCloudFSClient) (error
 			//}
 
 		} else {
-			log.Printf("Key %v exist",key)
+			log.Printf("Key %v exist", key)
 
 		}
 
@@ -116,7 +114,7 @@ func (c *Conn) ListKeysWithGcloud(req *RpbListKeysReq, gs GCloudFSClient) (error
 			break
 		}
 	}
-	return  nil
+	return nil
 }
 
 func (gs GCloudFSClient) Exists(key string) bool {
@@ -124,7 +122,7 @@ func (gs GCloudFSClient) Exists(key string) bool {
 	if _, err := gs.Gcloud.Objects.Get(gs.BucketNamePrefix+"-"+gs.BucketName, key).Do(); err == nil {
 		return true
 	} else {
-		log.Print("Did not find "+key+" in Google")
+		log.Print("Did not find " + key + " in Google")
 		return false
 	}
 }
@@ -146,14 +144,12 @@ func (c *Conn) SetBucketType(req *RpbSetBucketTypeReq) error {
 	return c.do(MsgRpbSetBucketTypeReq, MsgRpbSetBucketResp, req, nil)
 }
 
-
-func CreatePool()(*pooly.Service){
+func CreatePool() *pooly.Service {
 	conf := new(pooly.ServiceConfig)
 	conf.Driver = NewDriver()
 
 	s, _ := pooly.NewService("riak", conf)
 	s.Add("localhost:8087")
-
 
 	return s
 }
