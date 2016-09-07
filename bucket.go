@@ -4,6 +4,9 @@ import (
 	"github.com/3XX0/pooly"
 	storage "google.golang.org/api/storage/v1"
 	"log"
+	"google.golang.org/api/googleapi"
+	"fmt"
+	"bytes"
 )
 
 type GCloudFSClient struct {
@@ -90,19 +93,33 @@ func (c *Conn) ListKeysWithGcloud(req *RpbListKeysReq, gs GCloudFSClient) error 
 
 			}
 			log.Printf("Content length %v", len(resKV.Content[0].Value))
+			objects, _ := gs.Gcloud.Objects.List("test").Do()
 
-			//TODO
-			//data := resKV.Content[0].Value
-			//
-			//fmt.Printf("Data length is %v",len(data))
-			//buf := bytes.NewBuffer(data)
-			//object := &storage.Object{Name: key}
-			//if res, err := gs.Gcloud.Objects.Insert(gs.BucketNamePrefix+"-"+gs.BucketName, object).Media(buf).Do(); err == nil {
-			//	log.Printf("Inserted Object %v to GCloud Store at location: %v", res.Name, res.SelfLink)
-			//	return key, nil
-			//} else {
-			//	return key, err
-			//}
+			objects.Items[0].Size
+			data := resKV.Content[0].Value
+
+			riakDataSize := len(data)
+
+			fmt.Printf("Data length is %v",len(data))
+			buf := bytes.NewBuffer(data)
+			object := &storage.Object{Name: key}
+
+			res, err := gs.Gcloud.Objects.Insert(gs.BucketNamePrefix+"-"+gs.BucketName, object).Media(buf).Do();
+			if err == nil {
+				log.Printf("Inserted Object %v to GCloud Store at location: %v", res.Name, res.SelfLink)
+
+				if riakDataSize != res.Size {
+					//retry
+					return key, err
+
+				} else {
+					return key, nil
+				}
+
+			} else {
+			    return key, err
+			}
+
 
 		} else {
 			log.Printf("Key %v exist", key)
